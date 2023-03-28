@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/bottomHome"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+    <item android:id="@+id/bottomTimer"
+        android:icon="@drawable/ic_time"
+        android:title="Timer" />
+    <item android:id="@+id/bottomPair"
+        android:icon="@drawable/ic_setting"
+        android:title="Device" />
+</menu>
