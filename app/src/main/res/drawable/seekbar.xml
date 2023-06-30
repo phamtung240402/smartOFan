@@ -3,11 +3,15 @@
     <item android:gravity="center_vertical">
         <shape android:shape="rectangle">
             <solid
-                android:color="@color/black"/>
+                android:color="@color/beige"/>
             <size android:height="70dp"
                 android:width="300dp"/>
             <corners
-                android:radius="20dp"/>
+                android:radius="10dp"/>
+            <padding android:top="2dp"
+                android:bottom="2dp"
+                android:left="4dp"
+                android:right="4dp"/>
         </shape>
     </item>
     <item android:gravity="center_vertical">
@@ -15,10 +19,16 @@
             <selector>
                 <item>
                     <shape android:shape="rectangle">
-                        <solid android:color="@color/darksky"/>
-                        <corners android:radius="20dp"/>
+                        <solid
+                            android:color="@color/red"/>
                         <size android:height="70dp"
                             android:width="300dp"/>
+                        <corners
+                            android:radius="10dp"/>
+                        <padding android:top="2dp"
+                            android:bottom="2dp"
+                            android:left="4dp"
+                            android:right="4dp"/>
                     </shape>
                 </item>
             </selector>

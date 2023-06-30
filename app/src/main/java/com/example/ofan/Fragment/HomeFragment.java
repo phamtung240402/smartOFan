@@ -1,5 +1,6 @@
 package com.example.ofan.Fragment;
 
+import android.app.ActionBar;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -11,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -38,26 +41,29 @@ import java.util.ArrayList;
 
 
 public class HomeFragment extends Fragment {
-    public static final String UUID_SERVICE_BUTTON_OPTIONS = "000000ee-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_Characteristic_BUTTON_OPTIONS = "0000ee01-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_SERVICE_TEMPERATURE = "0000180f-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_CHARACTERISTIC_TEMPERARTURE = "00002a19-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_SERVICE_SEEKBAR = "0000180c-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_CHARACTERISTIC_SEEKBAR = "00002a16-0000-1000-8000-00805f9b34fb";
-    public static final String HEX_WRITE_AUTO = "00";
+    public static final String SERVICE_BUTTON_OFF = "EE01";
+    public static final String UUID_SERVICE_BUTTON_OFF = String.valueOf(ByteUtils.parseUUID(SERVICE_BUTTON_OFF));
+    public static final String CHARACTERISTIC_BUTTON_OFF = "2222";
+    public static final String UUID_CHARACTERISTIC_BUTTON_OFF = String.valueOf(ByteUtils.parseUUID(CHARACTERISTIC_BUTTON_OFF));
+    public static final String SERVICE_SEEKBAR_MANUAL = "180A";
+    public static final String UUID_SERVICE_SEEKBAR_MANUAL = String.valueOf(ByteUtils.parseUUID(SERVICE_SEEKBAR_MANUAL));
+    public static final String CHARATERISTIC_SEEKBAR_MANUAL = "2A14";
+    public static final String UUID_CHARACTERISTIC_SEEKBAR_MANUAL = String.valueOf(ByteUtils.parseUUID(CHARATERISTIC_SEEKBAR_MANUAL));
+    public static final String SERVICE_SEEKBAR_AUTO = "180C";
+    public static final String UUID_SERVICE_SEEKBAR_AUTO = String.valueOf(ByteUtils.parseUUID(SERVICE_SEEKBAR_AUTO));
+    public static final String CHARATERISTIC_SEEKBAR_AUTO = "2A16";
+    public static final String UUID_CHARACTERISTIC_SEEKBAR_AUTO = String.valueOf(ByteUtils.parseUUID(CHARATERISTIC_SEEKBAR_AUTO));
     public static final String HEX_WRITE_ONOFF = "00";
-
     private TextView txtShowSpeed;
-    private Animation rotation;
+    private TextView txtMode;
     private View view;
     private BleDatabase bleDatabase;
     private ArrayList<BleDevice> devices;
     private BleDevice mDevice;
     private AppCompatButton btnOff, btnManual, btnAuto;
     private SeekBar seekbar;
-    private LinearLayout ln_seekbar;
-    private ImageView imgRotation;
     private int count_manual_mode = 1;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -75,22 +81,21 @@ public class HomeFragment extends Fragment {
     private void initView() {
         bleDatabase = new BleDatabase(getContext());
         devices = bleDatabase.getBleList();
-
         txtShowSpeed = view.findViewById(R.id.txtShowSpeed);
         btnOff = view.findViewById(R.id.btnOff);
         btnManual = view.findViewById(R.id.btnManual);
         btnAuto = view.findViewById(R.id.btnAuto);
         seekbar = view.findViewById(R.id.seekbar);
-        imgRotation= view.findViewById(R.id.imgRotation);
-        ln_seekbar = view.findViewById(R.id.ln_seekbar);
-
+        txtMode = view.findViewById(R.id.txtMode);
         btnOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                txtMode.setText("");
                 seekbar.setProgress(0);
                 if (checkConnect()) {
-                    BleManager.getInstance().write(mDevice, UUID_SERVICE_BUTTON_OPTIONS, UUID_Characteristic_BUTTON_OPTIONS,
+                    BleManager.getInstance().write(mDevice, UUID_SERVICE_BUTTON_OFF, UUID_CHARACTERISTIC_BUTTON_OFF,
                             ByteUtils.hexStr2Bytes(HEX_WRITE_ONOFF), writeCallBack);
+                    btnManual.setText("Bật");
                 } else {
                     Log.d("oam-off", String.valueOf(ByteUtils.hexStr2Bytes(HEX_WRITE_ONOFF)));
                 }
@@ -98,53 +103,60 @@ public class HomeFragment extends Fragment {
         });
 
         btnManual.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try{
-                do {
-                    count_manual_mode++;
-                    if (count_manual_mode == 1) {
-                        seekbar.setProgress(35);
-                        break;
-                    } else if (count_manual_mode == 2) {
-                        seekbar.setProgress(70);
-                        break;
-                    } else {
-                        seekbar.setProgress(100);
-                        break;
-                    }
-                }
-                while (count_manual_mode <= 4);
-                    if (count_manual_mode == 3) count_manual_mode = 0;
-            } catch (Exception ex) {
-                    Log.d("oam-manual", ex.getMessage());
-                }
-            }
-        });
+                                         @Override
+                                         public void onClick(View view) {
+                                             count_manual_mode++;
+                                             btnManual.setText("Tốc độ");
+                                             txtMode.setText("Thường");
+                                             do {
+                                                 if (count_manual_mode == 1) {
+                                                     seekbar.setProgress(35);
+                                                 } else if (count_manual_mode == 2) {
+                                                     seekbar.setProgress(70);
+                                                 } else {
+                                                     seekbar.setProgress(99);
+                                                 }
+                                                 if(count_manual_mode > 3) count_manual_mode = 0;
+                                             } while (count_manual_mode < 3);
+                                         }
+                                     }
+            );
 
         btnAuto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                txtShowSpeed.setText(String.format("%02d", seekbar.getProgress()));
+                txtMode.setText("Gió tự nhiên");
                 if (checkConnect()) {
-                    BleManager.getInstance().write(mDevice, UUID_SERVICE_TEMPERATURE, UUID_CHARACTERISTIC_TEMPERARTURE, ByteUtils.hexStr2Bytes(HEX_WRITE_AUTO) ,writeCallBack);
-                    BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR, UUID_CHARACTERISTIC_SEEKBAR,
-                            ByteUtils.hexStr2Bytes(String.format("%02d", seekbar.getProgress())), writeCallBack);
-                    txtShowSpeed.setText(String.format("%02d", seekbar.getProgress()));
+                    if(seekbar.getProgress() == 0) {
+                        seekbar.setProgress(70);
+                    } else {
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR_AUTO, UUID_CHARACTERISTIC_SEEKBAR_AUTO,
+                                ByteUtils.hexStr2Bytes(String.valueOf(seekbar.getProgress())), writeCallBack);
+                    }
                 } else {
-                    Log.d("oam-auto", String.valueOf(ByteUtils.hexStr2Bytes(HEX_WRITE_AUTO)));
+                    Log.d("oam-auto", "failed to send");
                 }
             }
         });
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(checkConnect()) {
-                        BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR, UUID_CHARACTERISTIC_SEEKBAR,
+                txtShowSpeed.setText(String.format("%02d", progress));
+                if (checkConnect()) {
+                    if(txtMode.getText().toString().contentEquals("Thường")) {
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR_MANUAL, UUID_CHARACTERISTIC_SEEKBAR_MANUAL,
                                 ByteUtils.hexStr2Bytes(String.format("%02d", progress)), writeCallBack);
-                    txtShowSpeed.setText(String.format("%02d", progress));
-                }
-                else {
-                    Log.d("oam-seekbar", String.valueOf(ByteUtils.hexStr2Bytes(String.format("%02d", progress))));
+                    } else if(txtMode.getText().toString().contentEquals("Gió tự nhiên")) {
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR_AUTO, UUID_CHARACTERISTIC_SEEKBAR_AUTO,
+                                ByteUtils.hexStr2Bytes(String.format("%02d", progress)), writeCallBack);
+                    } else {
+                        txtMode.setText("Thường");
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_SEEKBAR_MANUAL, UUID_CHARACTERISTIC_SEEKBAR_MANUAL,
+                                ByteUtils.hexStr2Bytes(String.format("%02d", progress)), writeCallBack);
+                    }
+                } else {
+                    Log.d("oam", "seekbar");
                 }
             }
 
@@ -237,7 +249,8 @@ public class HomeFragment extends Fragment {
     private BleWriteCallback writeCallBack = new BleWriteCallback() {
         @Override
         public void onWriteSuccess(byte[] data, BleDevice device) {
-            Logger.e("write success:" + ByteUtils.bytes2HexStr(data));
+            Logger.e("oam", "00");
+
         }
 
         @Override
@@ -245,4 +258,6 @@ public class HomeFragment extends Fragment {
             Logger.e("write fail:" + info);
         }
     };
+
+
 }

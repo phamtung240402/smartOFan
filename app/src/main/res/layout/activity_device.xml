@@ -5,51 +5,66 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Activity.DeviceActivity"
-    android:background="@color/blur"
-    android:orientation="vertical">
-    <androidx.constraintlayout.widget.ConstraintLayout
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp">
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_gravity="center_vertical">
+        android:layout_marginTop="5dp">
         <ImageButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/btnBack"
             android:src="@drawable/ic_back"
-            android:background="@drawable/bg_button"
+            android:background="@drawable/bg_circle_button"
             android:backgroundTint="@color/blur"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_bias="0"/>
-        <TextView
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"/>
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Thiết bị hiện có"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:textStyle="bold"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_toRightOf="@+id/btnBack"
+            android:layout_marginLeft="10dp"
+            android:gravity="center_vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tbTitle"
+                android:text="Thiết bị hiện có"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textAlignment="center" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tbCounter"
+                android:text="Chọn để kết nối tới thiết bị"
+                android:layout_marginTop="5dp"
+                android:textSize="12sp"
+                android:textColor="@color/gray"
+                android:textAlignment="center"/>
+        </LinearLayout>
         <ImageButton
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/btnRefresh"
-            android:background="@drawable/bg_button"
+            android:background="@drawable/bg_circle_button"
             android:src="@drawable/ic_refresh"
             android:scaleType="center"
-            app:layout_constraintStart_toEndOf="@+id/btnBack"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.9"
-            android:backgroundTint="@color/blur"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="@color/white"
+            app:tint="@color/red"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
         <androidx.recyclerview.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/rv_availableDevices"/>
+            android:id="@+id/rv_availableDevices"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_ble"
+            android:clickable="false"/>
 </LinearLayout>

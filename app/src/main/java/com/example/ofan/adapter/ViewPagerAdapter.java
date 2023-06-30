@@ -9,7 +9,7 @@ import com.example.ofan.Fragment.DeviceFragment;
 import com.example.ofan.Fragment.HomeFragment;
 import com.example.ofan.Fragment.TimerFragment;
 
-public class ViewPagerAdapter extends FragmentStateAdapter {
+public class   ViewPagerAdapter extends FragmentStateAdapter {
     public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
         super(fragmentActivity);
     }
@@ -20,12 +20,10 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
         switch (position) {
             case 0: 
                 return new HomeFragment();
-
             case 1:
                 return new TimerFragment();
             case 2:
                 return new DeviceFragment();
-
             default:
                 return new HomeFragment();
         }

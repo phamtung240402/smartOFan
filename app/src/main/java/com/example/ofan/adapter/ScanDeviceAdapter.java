@@ -26,14 +26,6 @@ public class ScanDeviceAdapter extends CommonRecyclerViewAdapter<BleDevice> {
         tvName = (TextView) mHolder.mViews.get(R.id.txt_itemName);
         tvAddress = (TextView) mHolder.mViews.get(R.id.txt_itemAddress);
         tvName.setText(bleDevice.name);
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                BleManager.getInstance().readRssi(bleDevice, rssiCallback);
-                handler.postDelayed(this, 2000);
-            }
-        }, 2000);
     }
 
     @Override

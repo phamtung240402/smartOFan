@@ -9,11 +9,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -30,17 +32,24 @@ import com.example.ofan.Database.BleDatabase;
 import com.example.ofan.R;
 import com.example.ofan.adapter.CommonRecyclerViewAdapter;
 import com.example.ofan.adapter.ScanDeviceAdapter;
+import com.example.ofan.utils.ByteUtils;
 import com.ficat.easyble.BleDevice;
 import com.ficat.easyble.BleManager;
+import com.ficat.easyble.Logger;
+import com.ficat.easyble.gatt.callback.BleWriteCallback;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 
 
 public class DeviceFragment extends Fragment {
+    public static final String SERVICE_BUTTON_OPTIONS = "00EE";
+    public static final String UUID_SERVICE_BUTTON_OPTIONS = String.valueOf(ByteUtils.parseUUID(SERVICE_BUTTON_OPTIONS));
+    public static final String CHARACTERISTIC_BUTTON_OPTIONS = "EE01";
+    public static final String UUID_Characteristic_BUTTON_OPTIONS = String.valueOf(ByteUtils.parseUUID(CHARACTERISTIC_BUTTON_OPTIONS));
+    public static final String HEX_WRITE_ONOFF = "00";
     private View view;
     private RecyclerView rv_connectedDevices;
-    private ImageButton btnAddDevices;
     private BleDatabase bleDatabase;
     private ArrayList<BleDevice> devices;
     private ScanDeviceAdapter adapter;
@@ -50,25 +59,20 @@ public class DeviceFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_device, container, false);
-        initData();
-        showDeviceByRv();
         return view;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initData();
+        showDeviceByRv();
+    }
 
     private void initData() {
         rv_connectedDevices = view.findViewById(R.id.rv_connectedDevice);
-        btnAddDevices = view.findViewById(R.id.btnAddDevice);
         bleDatabase = new BleDatabase(getContext());
         devices = bleDatabase.getBleList();
-
-        btnAddDevices.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), DeviceActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 
     private void showDeviceByRv() {
@@ -82,6 +86,14 @@ public class DeviceFragment extends Fragment {
         });
         SparseArray<int[]> res = new SparseArray<>();
         res.put(R.layout.ble_item,new int[]{R.id.txt_itemName,R.id.txt_itemAddress});
+        Log.d("oam-size", String.valueOf(devices.size()));
+        if(devices.size() != 0) {
+            mDevice = devices.get(0);
+        }
+        else {
+            devices.clear();
+            mDevice = null;
+        }
         adapter = new ScanDeviceAdapter(getContext(), devices, res);
         rv_connectedDevices.setAdapter(adapter);
         adapter.setOnItemLongClickListener(new CommonRecyclerViewAdapter.OnItemLongClickListener() {
@@ -90,12 +102,18 @@ public class DeviceFragment extends Fragment {
                 openWarningDialog(Gravity.CENTER, position);
             }
         });
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
         if(devices.size() != 0) {
             adapter.notifyDataSetChanged();
             mDevice = devices.get(0);
         }
         else {
+            devices.clear();
+            adapter.notifyDataSetChanged();
             mDevice = null;
             return;
         }
@@ -134,6 +152,8 @@ public class DeviceFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 BleDevice device = devices.get(position);
+                BleManager.getInstance().write(mDevice, UUID_SERVICE_BUTTON_OPTIONS, UUID_Characteristic_BUTTON_OPTIONS,
+                        ByteUtils.hexStr2Bytes(HEX_WRITE_ONOFF), writeCallBack);
                 BleManager.getInstance().disconnect(device.address);
                 Toast.makeText(getContext(), "Disconnected", Toast.LENGTH_SHORT).show();
                 devices.clear();
@@ -145,4 +165,15 @@ public class DeviceFragment extends Fragment {
         });
         dialog.show();
     }
+    private BleWriteCallback writeCallBack = new BleWriteCallback() {
+        @Override
+        public void onWriteSuccess(byte[] data, BleDevice device) {
+            Logger.e("write success:" + ByteUtils.bytes2HexStr(data));
+        }
+
+        @Override
+        public void onFailure(int failCode, String info, BleDevice device) {
+            Logger.e("write fail:" + info);
+        }
+    };
 }

@@ -5,53 +5,36 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".Fragment.HomeFragment"
-    android:background="@color/blur">
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:id="@+id/rl_showTemp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_marginTop="50dp"
-        android:backgroundTint="@color/darksky">
-        <ImageView
+    android:background="@color/white">
+        <LinearLayout
             android:layout_width="250dp"
             android:layout_height="250dp"
-            android:src="@drawable/img_clock"
-            android:layout_gravity="center"
-            android:id="@+id/imgRotation"
-            android:scaleType="fitCenter"
-            android:clipToOutline="true"/>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
             android:orientation="vertical"
-            android:layout_gravity="center">
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_circle"
+            android:id="@+id/rl_showTemp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
             <TextView
+                android:id="@+id/txtShowSpeed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textAlignment="center"
                 android:text="00"
-                android:textColor="@color/white"
+                android:textAlignment="center"
+                android:textColor="@color/red"
                 android:textSize="35sp"
-                android:textStyle="bold"
-                android:id="@+id/txtShowSpeed"/>
+                android:textStyle="bold"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Tốc độ quay"
                 android:layout_marginTop="5dp"
-                android:textSize="15sp"
-                android:textColor="@color/white"
-                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/gray"
                 android:textAlignment="center"/>
         </LinearLayout>
-
-    </FrameLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -59,18 +42,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/rl_showTemp"
         android:orientation="vertical"
-        android:layout_margin="20dp"
         android:id="@+id/ll_option"
-        android:paddingBottom="20dp">
+        android:layout_marginTop="48dp">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Điều khiển"
             android:textSize="16sp"
+            android:textAllCaps="true"
             android:id="@+id/txtOption"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:layout_marginTop="20dp"/>
+            android:textColor="@color/gray"/>
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -79,22 +60,23 @@
             app:layout_constraintTop_toBottomOf="@+id/txtOption"
             android:layout_marginTop="15dp"
             android:id="@+id/cl_buttonoption">
+
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnOff"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
+                android:background="@drawable/bg_button"
+                android:drawableTop="@drawable/ic_off"
+                android:drawableTint="@color/white"
+                android:paddingTop="16dp"
+                android:text="Tắt"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toStartOf="@+id/btnManual"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:background="@drawable/bg_button"
-                android:drawableTop="@drawable/ic_off"
-                android:paddingTop="10dp"
-                android:text="Tắt"
-                android:textAllCaps="false"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:textSize="12sp" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnManual"
@@ -105,13 +87,13 @@
                 app:layout_constraintStart_toEndOf="@+id/btnOff"
                 app:layout_constraintTop_toTopOf="parent"
                 android:background="@drawable/bg_button"
-                android:drawableTop="@drawable/fan_svgrepo_com"
-                android:paddingTop="10dp"
-                android:text="Bật/Tốc độ"
+                android:drawableTop="@drawable/ic_wind"
+                android:drawableTint="@color/white"
+                android:paddingTop="16dp"
+                android:text="Bật"
                 android:textAllCaps="false"
-                android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="12sp"/>
+                android:textSize="14sp"/>
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnAuto"
@@ -123,25 +105,23 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:background="@drawable/bg_button"
                 android:drawableTop="@drawable/ic_auto"
-                android:paddingTop="10dp"
+                android:drawableTint="@color/white"
+                android:paddingTop="16dp"
                 android:text="Gió tự nhiên"
                 android:textAllCaps="false"
-                android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="125dp"
         android:id="@+id/ln_seekbar"
-        android:layout_marginTop="15dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ll_option"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginTop="30dp">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -149,20 +129,28 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Điều tốc"
+                android:text="Tốc độ "
+                android:textAllCaps="true"
                 android:textSize="16sp"
-                android:textColor="@color/white"
-                android:textStyle="bold"
+                android:textColor="@color/gray"
+                android:layout_marginTop="5dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/txtMode"
+                android:text="Thường"
+                android:textAllCaps="true"
+                android:textSize="16sp"
+                android:textColor="@color/gray"
                 android:layout_marginTop="5dp"/>
         </LinearLayout>
-
         <SeekBar
             android:layout_width="match_parent"
             android:layout_height="70dp"
             android:id="@+id/seekbar"
             android:layout_below="@+id/txtSpeed"
             android:layout_marginTop="20dp"
-            android:thumb="@drawable/sb_thumb"
+            android:thumbTint="@android:color/transparent"
             android:progressDrawable="@drawable/seekbar"
             android:indeterminate="false"
             android:max="100"

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -41,74 +42,38 @@ import com.ficat.easyble.BleDevice;
 import com.ficat.easyble.BleManager;
 import com.ficat.easyble.Logger;
 import com.ficat.easyble.gatt.callback.BleWriteCallback;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 
 public class TimerFragment extends Fragment {
-    private String UUID_TIMER_SERVICE = "0000180a-0000-1000-8000-00805f9b34fb";
-    private String UUID_TIMER_CHARACTERISTICS = "00002a14-0000-1000-8000-00805f9b34fb";
+    public static final String SERVICE_HOUR = "180F";
+    public static final String UUID_SERVICE_HOUR = String.valueOf(ByteUtils.parseUUID(SERVICE_HOUR));
+    public static final String CHARACTERISTIC_HOUR = "2A19";
+    public static final String UUID_Characteristic_HOUR = String.valueOf(ByteUtils.parseUUID(CHARACTERISTIC_HOUR));
     private View mView;
-    private ImageButton btnAddTimer;
-    private TimeItem timeItem;
-    private int hour, minutes;
-    private ArrayList<TimeItem> timeItems = new ArrayList<>();
-    private RecyclerView rv_timer;
-    private TimerAdapter timerAdapter;
     private BleDatabase bleDatabase;
     private ArrayList<BleDevice> devices;
     private BleDevice mDevice;
-    private TimerDatabase timerDatabase;
-    private TimeItem selectedTime;
+    private AppCompatButton btnTao;
+    private int selectedHour = 0;
+    private int selectedMinute = 0;
+    private long timeLeft = 0;
+    private int hourLeft = 0;
+    private int minuteLeft = 0;
     private Calendar c;
-    private int timeLeft, hourLeft, minuteLeft;
-    private OnLongClickListener mOnLongClickListener = new OnLongClickListener() {
-        @Override
-        public void onLongClick(int position) {
-            openWarningDialog(Gravity.CENTER, position);
-        }
-    };
-    private OnClickListener mOnClickListener = new OnClickListener() {
-        @Override
-        public void onChecked(int position, boolean checked) {
-//            if(mDevice == null) {
-//                return;
-//            }
-            c = Calendar.getInstance();
-            selectedTime = timeItems.get(position);
-            selectedTime.setChecked(checked);
-            for (int i = 0; i < timeItems.size(); i++) {
-                if (selectedTime.isChecked() && i != position) {
-                    timeItems.get(i).setChecked(false);
-                    timerAdapter.notifyItemChanged(i);
-                }
-            }
-            timerDatabase.saveTimer(timeItems);
-            if (checked) {
-                if (c.get(Calendar.HOUR_OF_DAY) < selectedTime.getHour()) {
-                    timeLeft = ((selectedTime.getHour() - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedTime.getMinute() - c.get(Calendar.MINUTE));
-                } else if (c.get(Calendar.HOUR_OF_DAY) > selectedTime.getHour()) {
-                    timeLeft = ((selectedTime.getHour() + 24 - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedTime.getMinute() - c.get(Calendar.MINUTE));
-                } else {
-                    if (selectedTime.getMinute() > c.get(Calendar.MINUTE)) {
-                        timeLeft = (selectedTime.getMinute() - c.get(Calendar.MINUTE));
-                    } else {
-                        timeLeft = ((selectedTime.getHour() + 24 - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedTime.getMinute() - c.get(Calendar.MINUTE));
-                    }
-                }
-                hourLeft = timeLeft / 60;
-                minuteLeft = timeLeft % 60;
-//                BleManager.getInstance().write(mDevice, UUID_TIMER_SERVICE, UUID_TIMER_CHARACTERISTICS, ByteUtils.hexStr2Bytes(String.valueOf(timeLeft)) ,writeCallBack);
-                Log.d("oam-time", String.valueOf(hourLeft) + String.valueOf(minuteLeft));
-            }
-        }
-    };
+
+    private TextView txtCurrentHour, txtCurrentMinute, txtCurrentSecond;
+
+    private boolean mTimeRunning;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         mView = inflater.inflate(R.layout.fragment_timer, container, false);
+        c = Calendar.getInstance();
         initView();
         return mView;
     }
@@ -119,68 +84,33 @@ public class TimerFragment extends Fragment {
     }
 
     private void initView() {
-        timerDatabase = new TimerDatabase(getContext());
-        timeItems = timerDatabase.getTimerList();
-        timerAdapter = new TimerAdapter(getContext(), timeItems, mOnClickListener, mOnLongClickListener);
-
-        btnAddTimer = mView.findViewById(R.id.btnAddTimer);
-        rv_timer = mView.findViewById(R.id.rv_timer);
-        rv_timer.setAdapter(timerAdapter);
-        rv_timer.setLayoutManager(new LinearLayoutManager(getContext()));
-        if(timeItems.size() != 0) {
-            timerAdapter.notifyDataSetChanged();
-        }
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                timeItems.remove(position);
-                saveTimeList();
-            }
-        });
-
-        itemTouchHelper.attachToRecyclerView(rv_timer);
-
-        btnAddTimer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TimePickerDialog.OnTimeSetListener onTimeSetListener = new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        hour = hourOfDay;
-                        minutes = minute;
-                        timeItem = new TimeItem(hour, minutes);
-                        timeItems.add(timeItem);
-                        saveTimeList();
-                    }
-                };
-
-                TimePickerDialog timePickerDialog = new TimePickerDialog(getActivity(), onTimeSetListener, hour, minutes, true);
-                timePickerDialog.show();
-            }
-        });
+        btnTao = mView.findViewById(R.id.btnTao);
+        txtCurrentHour = mView.findViewById(R.id.txtHour);
+        txtCurrentMinute = mView.findViewById(R.id.txtMinute);
+        txtCurrentSecond = mView.findViewById(R.id.txtSecond);
         bleDatabase = new BleDatabase(getContext());
         devices = bleDatabase.getBleList();
-        if(devices.size() != 0) {
-            mDevice = devices.get(0);
-        }
-        else {
-            mDevice = null;
-            for(int i = 0; i < timeItems.size(); i++) {
-                if(timeItems.get(i).isChecked())
-                {
-                    timeItems.get(i).setChecked(false);
+        btnTao.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (btnTao.getText().toString().trim().contentEquals("Tạo")) {
+                    setTimer();
+                } else {
+                    countDownTimer.cancel();
+                    timeLeft = 0;
+                    setCountDownText();
+                    btnTao.setText("Tạo");
                 }
             }
-            saveTimeList();
+        });
+        if (devices.size() != 0) {
+            mDevice = devices.get(0);
+        } else {
+            mDevice = null;
             return;
         }
     }
+
     private BleWriteCallback writeCallBack = new BleWriteCallback() {
         @Override
         public void onWriteSuccess(byte[] data, BleDevice device) {
@@ -193,50 +123,121 @@ public class TimerFragment extends Fragment {
         }
     };
 
-    private void saveTimeList() {
-        timerDatabase.saveTimer(timeItems);
-        timerAdapter.notifyDataSetChanged();
-    }
+    private void setTimer() {
+        View viewDialog = getLayoutInflater().inflate(R.layout.layout_set_timer, null);
 
-    private void openWarningDialog(int gravity, int position) {
-        final Dialog dialog = new Dialog(getContext());
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.layout_dialog_seekbar);
-        Window window = dialog.getWindow();
-        if(window == null) {
-            return;
-        }
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        WindowManager.LayoutParams windowAttribute = window.getAttributes();
-        windowAttribute.gravity = gravity;
-        window.setAttributes(windowAttribute);
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        bottomSheetDialog.setContentView(viewDialog);
+        bottomSheetDialog.show();
+        bottomSheetDialog.setCancelable(false);
 
-        if(Gravity.CENTER == gravity) {
-            dialog.setCancelable(false);
-        }
+        ImageButton btnBack = viewDialog.findViewById(R.id.btnBack);
+        TextView txtHour = viewDialog.findViewById(R.id.txtHour);
+        TextView txtMinute = viewDialog.findViewById(R.id.txtMinute);
+        SeekBar seekbarHour = viewDialog.findViewById(R.id.seekbarHour);
+        SeekBar seekbarMinute = viewDialog.findViewById(R.id.seekbarMinute);
+        AppCompatButton btnHuy = viewDialog.findViewById(R.id.btnHuy);
+        AppCompatButton btnTao = viewDialog.findViewById(R.id.btnTao);
 
-        AppCompatButton btnDialogNo = dialog.findViewById(R.id.btnDialogNo);
-        AppCompatButton btnDialogYes = dialog.findViewById(R.id.btnDialogYes);
-        TextView txtAnnouncement = dialog.findViewById(R.id.txtAnnouncement);
-        txtAnnouncement.setText("Bạn có muốn xóa không?");
-        btnDialogNo.setOnClickListener(new View.OnClickListener() {
+        btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialog.dismiss();
+                bottomSheetDialog.dismiss();
+            }
+        });
+        btnHuy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetDialog.dismiss();
             }
         });
 
-        btnDialogYes.setOnClickListener(new View.OnClickListener() {
+        seekbarHour.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onClick(View v) {
-                timeItems.remove(position);
-                timerAdapter.notifyDataSetChanged();
-                timerDatabase.saveTimer(timeItems);
-                dialog.dismiss();
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtHour.setText(String.format("%02d", progress));
+                selectedHour = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
-        dialog.show();
+
+        seekbarMinute.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtMinute.setText(String.format("%02d", progress));
+                selectedMinute = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        btnTao.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                    if(c.get(Calendar.HOUR_OF_DAY) < selectedHour) {
+                        timeLeft = (selectedHour - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedMinute - c.get(Calendar.MINUTE);
+                    } else if(c.get(Calendar.HOUR_OF_DAY) > selectedHour) {
+                        timeLeft = (selectedHour + 24 - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedMinute - c.get(Calendar.MINUTE);
+                    } else {
+                        if (selectedMinute > c.get(Calendar.MINUTE)) {
+                            timeLeft = (selectedMinute - c.get(Calendar.MINUTE));
+                        } else {
+                            timeLeft = (selectedHour + 24 - c.get(Calendar.HOUR_OF_DAY)) * 60 + selectedMinute - c.get(Calendar.MINUTE);
+                        }
+                    }
+                    startTimer();
+                    bottomSheetDialog.dismiss();
+                    if(mDevice != null) {
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_HOUR, UUID_Characteristic_HOUR,
+                                ByteUtils.hexStr2Bytes(String.valueOf(hourLeft)), writeCallBack);
+                        BleManager.getInstance().write(mDevice, UUID_SERVICE_MINUTE, UUID_Characteristic_MINUTE,
+                                ByteUtils.hexStr2Bytes(String.valueOf(minuteLeft)), writeCallBack);
+
+                    }
+                }
+            });
     }
 
+    private void startTimer() {
+        countDownTimer.start();
+        mTimeRunning = true;
+        btnTao.setText("Hủy");
+    }
+    CountDownTimer countDownTimer = new CountDownTimer(timeLeft * 60 * 1000, 1000) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+            timeLeft = millisUntilFinished;
+            setCountDownText();
+        }
+
+        @Override
+        public void onFinish() {
+            mTimeRunning = false;
+            btnTao.setText("Hủy");
+        }
+    };
+    private void setCountDownText() {
+        int hours = (int)timeLeft/1000 / 60 / 60;
+        int minutes = (int)timeLeft/1000 % 3600 / 60;
+        int seconds = (int) timeLeft/1000 % 3600 % 60;
+        txtCurrentHour.setText(String.format("%02d", hours));
+        txtCurrentMinute.setText(String.format("%02d", minutes));
+        txtCurrentSecond.setText(String.format("%02d", seconds));
+    }
 }
